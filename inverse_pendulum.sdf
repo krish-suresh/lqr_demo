@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<sdf xmlns:drake="http://drake.mit.edu" version="1.9">
+  <model name="inverse_pendulum">
+    <link name="cart">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>0</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0</iyy>
+          <iyz>0</iyz>
+          <izz>0</izz>
+        </inertia>
+      </inertial>
+      <visual name="cart_visual">
+        <geometry>
+          <box>
+            <size>0.25 0.25 0.25</size>
+          </box>
+        </geometry>
+      </visual>
+    </link>
+    <link name="pendulum">
+      <pose>0 0 1 0 0 0</pose>
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>0</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0</iyy>
+          <iyz>0</iyz>
+          <izz>0</izz>
+        </inertia>
+      </inertial>
+      <visual name="pendulum_visual_end">
+        <geometry>
+          <sphere>
+            <radius>0.1</radius>
+          </sphere>
+        </geometry>
+      </visual>
+      <visual name="pendulum_visual_link">
+      <pose>0 0 -0.5 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.05</radius>
+            <length>1</length>
+          </cylinder>
+        </geometry>
+      </visual>
+    </link>
+    <joint name="slide" type="prismatic">
+      <parent>world</parent>
+      <child>cart</child>
+      <axis>
+        <xyz>
+          1 0 0
+        </xyz>
+      </axis>
+    </joint>
+    <joint name="pivot" type="revolute">
+      <pose>0 0 -1 0 0 0</pose>
+      <parent>cart</parent>
+      <child>pendulum</child>
+      <axis>
+        <xyz>
+          0 -1 0
+        </xyz>
+        <limit>
+          <effort>0.0</effort>
+        </limit>
+      </axis>
+    </joint>
+  </model>
+</sdf>
