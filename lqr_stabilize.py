@@ -108,12 +108,21 @@ def update_params_from_controls(state: ClientState) -> None:
     params["l"] = _clamp(controls["l"], MIN_LENGTH)
 
 
+def set_status_message(state: ClientState, message: str) -> None:
+    status = state.controls.get("status_markdown")
+    if status is not None:
+        status.content = message
+
+
 def create_param_controls(state: ClientState) -> None:
     client = state.client
     params = state.params
     controls = state.controls
 
     controls["run_button"] = client.gui.add_button("Run Simulation")
+    controls["status_markdown"] = client.gui.add_markdown(
+        "Status: Press **Run Simulation** to generate a trajectory."
+    )
 
     with client.gui.add_folder("Simulation") as f:
         controls["T"] = client.gui.add_number("Duration (T)", float(params["T"]))
@@ -185,36 +194,59 @@ def update_play_pause_icons(state: ClientState, playing: bool) -> None:
 
 
 def run_simulation(state: ClientState) -> None:
+    set_status_message(state, "Running simulation")
     update_params_from_controls(state)
     rebuild_plants(state.params)
     K = compute_lqr_gain_for_params(state.params)
-    state.params["K"] = K
 
     enable_controller = state.controls["enable_controller"].value
     local_K = K if enable_controller else np.zeros_like(K)
-    original_K = state.params["K"]
-    state.params["K"] = local_K
-    T, X = simulate(lambda x, u: dynamics(x, u, state.params), state.params, rk4)
-    state.params["K"] = original_K
+    previous_K = state.params.get("K")
 
-    state.sim_times = T
-    state.sim_states = X
-    state.trajectory = PiecewisePolynomial.FirstOrderHold(T, X.T)
+    try:
+        state.params["K"] = local_K
+        T, X = simulate(lambda x, u: dynamics(x, u, state.params), state.params, rk4)
 
-    slider = state.playback["slider"]
-    slider.max = float(state.params["T"])
-    slider.min = 0.0
-    slider.step = 1.0 / VISUALIZATION_FPS
-    slider.value = 0.0
+        state.sim_times = T
+        state.sim_states = X
+        state.trajectory = PiecewisePolynomial.FirstOrderHold(T, X.T)
 
-    state.last_frame_value = -1.0
-    update_play_pause_icons(state, True)
-    state.refresh = True
+        slider = state.playback["slider"]
+        slider.max = float(state.params["T"])
+        slider.min = 0.0
+        slider.step = 1.0 / VISUALIZATION_FPS
+        slider.value = 0.0
 
-    state.params["plant"].SetPositionsAndVelocities(
-        state.params["plant_context"], state.trajectory.value(0.0)
-    )
-    set_pendulum_visual(state.pendulum_handles, state.params["plant"], state.params["plant_context"])
+        state.last_frame_value = -1.0
+        update_play_pause_icons(state, True)
+        state.refresh = True
+
+        state.params["plant"].SetPositionsAndVelocities(
+            state.params["plant_context"], state.trajectory.value(0.0)
+        )
+        set_pendulum_visual(state.pendulum_handles, state.params["plant"], state.params["plant_context"])
+    except BaseException as exc:
+        if isinstance(exc, KeyboardInterrupt):
+            state.params["K"] = previous_K if previous_K is not None else K
+            raise
+        state.params["K"] = previous_K if previous_K is not None else K
+        slider = state.playback.get("slider")
+        if slider is not None:
+            slider.value = slider.min
+        update_play_pause_icons(state, False)
+        state.playing = False
+        state.refresh = False
+        state.trajectory = None
+        state.sim_times = None
+        state.sim_states = None
+        set_status_message(
+            state, "Simulation failed. Please refresh the page before trying again."
+        )
+        print(f"[error] Simulation failed for client {state.client.client_id}: {exc}")
+        return
+    else:
+        state.params["K"] = K
+        set_status_message(state, "Simulation running.")
 
 
 def bind_callbacks(state: ClientState) -> None:
