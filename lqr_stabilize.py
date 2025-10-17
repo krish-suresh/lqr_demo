@@ -138,11 +138,21 @@ def create_param_controls(state: ClientState) -> None:
 
     with client.gui.add_folder("LQR") as f:
         controls["enable_controller"] = client.gui.add_checkbox("Enable Controller", True)
-        controls["Q_0"] = client.gui.add_number("Q[0,0]", float(params["Q"][0, 0]))
-        controls["Q_1"] = client.gui.add_number("Q[1,1]", float(params["Q"][1, 1]))
-        controls["Q_2"] = client.gui.add_number("Q[2,2]", float(params["Q"][2, 2]))
-        controls["Q_3"] = client.gui.add_number("Q[3,3]", float(params["Q"][3, 3]))
-        controls["R_0"] = client.gui.add_number("R[0,0]", float(params["R"][0, 0]))
+        controls["Q_0"] = client.gui.add_slider(
+            "Q[0,0]", 0.0, 200.0, 0.1, float(params["Q"][0, 0])
+        )
+        controls["Q_1"] = client.gui.add_slider(
+            "Q[1,1]", 0.0, 200.0, 0.1, float(params["Q"][1, 1])
+        )
+        controls["Q_2"] = client.gui.add_slider(
+            "Q[2,2]", 0.0, 200.0, 0.1, float(params["Q"][2, 2])
+        )
+        controls["Q_3"] = client.gui.add_slider(
+            "Q[3,3]", 0.0, 200.0, 0.1, float(params["Q"][3, 3])
+        )
+        controls["R_0"] = client.gui.add_slider(
+            "R[0,0]", MIN_R, 10.0, 0.001, float(params["R"][0, 0])
+        )
         f.expand_by_default = False
 
     with client.gui.add_folder("Physical") as f:
@@ -240,7 +250,7 @@ def run_simulation(state: ClientState) -> None:
         state.sim_times = None
         state.sim_states = None
         set_status_message(
-            state, "Simulation failed. Please refresh the page before trying again."
+            state,"Simulation failed. Please refresh the page before trying again."
         )
         print(f"[error] Simulation failed for client {state.client.client_id}: {exc}")
         return
@@ -322,6 +332,9 @@ def main() -> None:
 
     @server.on_client_connect
     def _(client: viser.ClientHandle) -> None:
+        client.camera.position = np.array([1.41770366, 1.87300509, 0.33091806])
+        client.camera.wxyz = np.array([-0.17767678,  0.24119711,  0.76815397, -0.56585722])
+        client.camera.look_at = np.zeros(3)
         client.scene.world_axes.visible = True
         params = default_params()
         rebuild_plants(params)
