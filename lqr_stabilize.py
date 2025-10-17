@@ -332,9 +332,12 @@ def main() -> None:
 
     @server.on_client_connect
     def _(client: viser.ClientHandle) -> None:
-        client.camera.position = np.array([1.41770366, 1.87300509, 0.33091806])
-        client.camera.wxyz = np.array([-0.17767678,  0.24119711,  0.76815397, -0.56585722])
-        client.camera.look_at = np.zeros(3)
+        print(client.camera.position)
+        print(client.camera.wxyz)
+        print(client.camera.look_at)
+        client.camera.position = np.array([2.83590558, 4.68433961, 1.1625747 ])
+        client.camera.wxyz = np.array([-0.1354626,   0.23351444 , 0.8328761 , -0.48315453])
+        client.camera.look_at = np.array([0.19893419,  0.35136121, -1.73809098])
         client.scene.world_axes.visible = True
         params = default_params()
         rebuild_plants(params)
