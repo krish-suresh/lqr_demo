@@ -332,9 +332,9 @@ def main() -> None:
 
     @server.on_client_connect
     def _(client: viser.ClientHandle) -> None:
-        print(client.camera.position)
-        print(client.camera.wxyz)
-        print(client.camera.look_at)
+        # print(client.camera.position)
+        # print(client.camera.wxyz)
+        # print(client.camera.look_at)
         client.camera.position = np.array([2.83590558, 4.68433961, 1.1625747 ])
         client.camera.wxyz = np.array([-0.1354626,   0.23351444 , 0.8328761 , -0.48315453])
         client.camera.look_at = np.array([0.19893419,  0.35136121, -1.73809098])
